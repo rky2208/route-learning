@@ -1,0 +1,14 @@
+{
+  "name": "04-history-api-with-server",
+  "version": "1.0.0",
+  "main": "basicServer.js",
+  "scripts": {
+    "start": "node basicServer.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^4.22.1"
+  }
+}
