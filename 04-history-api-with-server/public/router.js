@@ -1,20 +1,19 @@
-// ---------------------------------------------
-// ROUTE DEFINITIONS (Simple SPA Pages)
-// ---------------------------------------------
-// Each key represents a URL path.
-// Each value represents the HTML that will be rendered for that route.
+// -----------------------------------------------------------
+// ROUTE DEFINITIONS
+// -----------------------------------------------------------
+// A simple object that maps URL paths to the HTML content that
+// should be displayed for each route. This acts as a tiny view
+// system for our Single Page Application.
 const routes = {
   '/': `
       <h1>Home Page</h1>
       <p>This is the Home screen rendered using History API Routing.</p>
 
       <div class="search-container">
-        <!-- Input field whose value is preserved across route changes -->
         <input id="searchInput" placeholder="Type something..." />
       </div>
 
       <div class="counter-container">
-        <!-- Button triggers JS function "count()" -->
         <button onclick="count()">Increase</button>
         <p id="value">0</p>
       </div>
@@ -33,108 +32,83 @@ const routes = {
 
 
 
-// ---------------------------------------------
-// CLIENT-SIDE NAVIGATION (History API)
-// ---------------------------------------------
-// Updates the URL WITHOUT reloading the page.
-// After updating the path, it renders the corresponding page.
+// -----------------------------------------------------------
+// navigateTo() — CLIENT-SIDE NAVIGATION
+// -----------------------------------------------------------
+// A helper that updates the browser URL WITHOUT refreshing the page.
+// Then it re-renders the appropriate screen using our router.
+//
+// Example:
+//   navigateTo("/about")
+//
+// This will:
+//   1. Change the URL to /about
+//   2. Render the About page
 function navigateTo(url) {
-  history.pushState(null, '', url); // Push new URL to the browser's history stack
-  renderRoute();                    // Re-render UI based on the updated path
+  history.pushState(null, '', url); // Push new URL onto browser history stack
+  renderRoute();                    // Render appropriate route view
 }
 
 
 
-// ---------------------------------------------
-// ROUTER FUNCTION: Renders the correct page
-// ---------------------------------------------
-// - Reads current URL
-// - Finds matching page template
-// - Injects template into #app container
-// - Restores UI state (input + counter)
+// -----------------------------------------------------------
+// renderRoute() — MAIN ROUTER FUNCTION
+// -----------------------------------------------------------
+// Determines which HTML template should be displayed based on
+// the current browser path.
+//
+// Steps:
+//   1. Read window.location.pathname (e.g., "/", "/about")
+//   2. Look up the associated route template
+//   3. Inject the template into #app
+//   4. Restore UI state (input + counter)
 function renderRoute() {
-  const path = window.location.pathname;        // Current browser path
-  const page = routes[path] || routes['/'];     // Default to home if path doesn't exist
+  const path = window.location.pathname;     // Current route path
+  const page = routes[path] || routes['/'];  // Fallback to Home page
 
-  document.getElementById('app').innerHTML = page; // Replace page content
-  restoreState();                                  // Restore counter + saved input text
+  // Render the route-specific HTML
+  document.getElementById('app').innerHTML = page;
+
+  // DOM was replaced, so restore persistent UI state
+  restoreState();
 }
 
 
 
-// ---------------------------------------------
-// INTERCEPT LINK CLICKS (SPA navigation)
-// ---------------------------------------------
-// Any <a data-link> click will:
-// - Prevent full page reload
-// - Navigate using History API
+// -----------------------------------------------------------
+// LINK INTERCEPTION — PREVENT FULL PAGE RELOAD
+// -----------------------------------------------------------
+// Instead of allowing <a> tags to reload the page, we intercept
+// clicks on links that contain [data-link].
+//
+// Example:
+//   <a href="/about" data-link>About</a>
+//
+// This:
+//   - prevents the default browser behavior
+//   - replaces it with navigateTo()
 document.addEventListener('click', event => {
   if (event.target.matches('[data-link]')) {
-    event.preventDefault();               // Stop browser reload
-    navigateTo(event.target.href);        // Perform SPA navigation instead
+    event.preventDefault();               // Stop browser navigation
+    navigateTo(event.target.href);        // Use SPA navigation instead
   }
 });
 
 
 
-// ---------------------------------------------
-// BROWSER BACK/FORWARD BUTTON SUPPORT
-// ---------------------------------------------
-// When the user clicks Back or Forward,
-// the popstate event fires → re-render the route.
+// -----------------------------------------------------------
+// BROWSER HISTORY SUPPORT (Back / Forward)
+// -----------------------------------------------------------
+// When the user presses the browser back or forward buttons,
+// the "popstate" event fires. We need to re-render the correct
+// route manually.
 window.addEventListener('popstate', renderRoute);
 
 
 
-// ---------------------------------------------
+// -----------------------------------------------------------
 // INITIAL PAGE LOAD
-// ---------------------------------------------
-// When the page loads, render the correct route.
+// -----------------------------------------------------------
+// When the user first opens the site or refreshes it,
+// we manually render the page based on the current URL.
 window.addEventListener('load', renderRoute);
-
-
-
-// ---------------------------------------------
-// STATE (Counter + Input Persistence)
-// ---------------------------------------------
-// These variables store values in memory to preserve UI state.
-let num = 0;
-let savedInputValue = "";
-
-
-
-// ---------------------------------------------
-// COUNTER INCREMENT FUNCTION
-// ---------------------------------------------
-// Called when the user clicks the "Increase" button.
-// Updates UI and preserves counter value.
-function count() {
-  num++;
-  document.getElementById("value").textContent = num;
-}
-
-
-
-// ---------------------------------------------
-// RESTORE UI STATE AFTER ROUTE CHANGE
-// ---------------------------------------------
-// Because the DOM gets fully replaced each time a route is rendered,
-// we must re-populate:
-// - The input field text
-// - The counter number
-// - The input event listener
-function restoreState() {
-  const input = document.getElementById("searchInput");
-  const counter = document.getElementById("value");
-
-  // Restore input field value and keep updating saved state
-  if (input) {
-    input.value = savedInputValue;
-    input.addEventListener("input", e => savedInputValue = e.target.value);
-  }
-
-  // Restore counter text
-  if (counter) {
-    counter.textContent = num;
-  }
-}

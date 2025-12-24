@@ -1,10 +1,11 @@
-// -------------------------------------------------------------
+// -----------------------------------------------------------
 // ROUTE DEFINITIONS
-// -------------------------------------------------------------
-// Each key corresponds to a browser pathname (e.g., "/", "/about").
-// Each value is the HTML that should be rendered for that route.
+// -----------------------------------------------------------
+// A simple object that maps URL paths to the HTML content that
+// should be displayed for each route. This acts as a tiny view
+// system for our Single Page Application.
 const routes = {
-  "/": `
+  '/': `
       <h1>Home Page</h1>
       <p>This is the Home screen rendered using History API Routing.</p>
 
@@ -18,80 +19,96 @@ const routes = {
       </div>
     `,
 
-  "/about": `
+  '/about': `
       <h1>About Page</h1>
       <p>You are now on the About screen.</p>
     `,
 
-  "/contact": `
+  '/contact': `
       <h1>Contact Page</h1>
       <p>This is the Contact screen.</p>
-    `,
+    `
 };
 
 
 
-// -------------------------------------------------------------
-// CLIENT-SIDE NAVIGATION (History API)
-// -------------------------------------------------------------
-// Updates the URL in the browser WITHOUT reloading the page.
-// After updating the address bar, it triggers a UI re-render.
+// -----------------------------------------------------------
+// navigateTo() — CLIENT-SIDE NAVIGATION
+// -----------------------------------------------------------
+// A helper that updates the browser URL WITHOUT refreshing the page.
+// Then it re-renders the appropriate screen using our router.
+//
+// Example:
+//   navigateTo("/about")
+//
+// This will:
+//   1. Change the URL to /about
+//   2. Render the About page
 function navigateTo(url) {
-  history.pushState(null, "", url); // Push new state into browser history
-  renderRoute();                    // Re-render the view for the new route
+  history.pushState(null, '', url); // Push new URL onto browser history stack
+  renderRoute();                    // Render appropriate route view
 }
 
 
 
-// -------------------------------------------------------------
-// ROUTE RENDERING FUNCTION
-// -------------------------------------------------------------
-// Determines which HTML to show based on the current URL path.
+// -----------------------------------------------------------
+// renderRoute() — MAIN ROUTER FUNCTION
+// -----------------------------------------------------------
+// Determines which HTML template should be displayed based on
+// the current browser path.
+//
 // Steps:
-//   1. Read current path (window.location.pathname)
-//   2. Look up matching template from routes[]
-//   3. Inject template into #app container
-//   4. Restore any preserved UI state (counter + input text)
+//   1. Read window.location.pathname (e.g., "/", "/about")
+//   2. Look up the associated route template
+//   3. Inject the template into #app
+//   4. Restore UI state (input + counter)
 function renderRoute() {
-  const path = window.location.pathname;     // e.g., "/about"
-  const page = routes[path] || routes["/"];  // Fallback to home page
+  const path = window.location.pathname;     // Current route path
+  const page = routes[path] || routes['/'];  // Fallback to Home page
 
-  // Replace page content with the template
-  document.getElementById("app").innerHTML = page;
+  // Render the route-specific HTML
+  document.getElementById('app').innerHTML = page;
 
-  // Restore UI state AFTER the DOM for this route is re-created
+  // DOM was replaced, so restore persistent UI state
   restoreState();
 }
 
 
 
-// -------------------------------------------------------------
-// LINK INTERCEPTION (Prevent Full Page Reloads)
-// -------------------------------------------------------------
-// Any <a data-link>...</a> will:
-//   - Prevent default browser navigation
-//   - Use SPA navigation instead
-document.addEventListener("click", (event) => {
-  if (event.target.matches("[data-link]")) {
-    event.preventDefault();              // Stop browser from reloading the page
-    navigateTo(event.target.href);       // Let our router handle navigation
+// -----------------------------------------------------------
+// LINK INTERCEPTION — PREVENT FULL PAGE RELOAD
+// -----------------------------------------------------------
+// Instead of allowing <a> tags to reload the page, we intercept
+// clicks on links that contain [data-link].
+//
+// Example:
+//   <a href="/about" data-link>About</a>
+//
+// This:
+//   - prevents the default browser behavior
+//   - replaces it with navigateTo()
+document.addEventListener('click', event => {
+  if (event.target.matches('[data-link]')) {
+    event.preventDefault();               // Stop browser navigation
+    navigateTo(event.target.href);        // Use SPA navigation instead
   }
 });
 
 
 
-// -------------------------------------------------------------
-// BACK/FORWARD BUTTON SUPPORT
-// -------------------------------------------------------------
-// When the user presses the browser’s back/forward buttons,
-// the popstate event fires. We re-render the correct route.
-window.addEventListener("popstate", renderRoute);
+// -----------------------------------------------------------
+// BROWSER HISTORY SUPPORT (Back / Forward)
+// -----------------------------------------------------------
+// When the user presses the browser back or forward buttons,
+// the "popstate" event fires. We need to re-render the correct
+// route manually.
+window.addEventListener('popstate', renderRoute);
 
 
 
-// -------------------------------------------------------------
+// -----------------------------------------------------------
 // INITIAL PAGE LOAD
-// -------------------------------------------------------------
-// When the user first opens the site (or refreshes), we render
-// the correct route based on the current URL.
-window.addEventListener("load", renderRoute);
+// -----------------------------------------------------------
+// When the user first opens the site or refreshes it,
+// we manually render the page based on the current URL.
+window.addEventListener('load', renderRoute);
